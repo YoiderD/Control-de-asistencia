@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% if modo == 'nuevo' %}Registrar Nuevo Alumno{% else %}Editar Alumno{% endif %}</title>
+</head>
+<body class="bg-light">
+<div class="container py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h5 mb-0">
+            {% if modo == 'nuevo' %}Registrar Nuevo Alumno{% else %}Editar Alumno{% endif %}
+        </h1>
+        <a href="{{ url_for('alumnos_lista') }}" class="btn btn-outline-secondary btn-sm">Volver</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for c,m in messages %}
+        <div class="alert alert-{{ c }}">{{ m }}</div>
+    {% endfor %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="dni" class="form-label">DNI *</label>
+                        <input type="text" name="dni" id="dni" class="form-control" 
+                               value="{{ alumno.DNI if alumno else '' }}" 
+                               {% if modo == 'editar' %}readonly{% endif %}
+                               maxlength="8" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="nombre" class="form-label">Nombre *</label>
+                        <input type="text" name="nombre" id="nombre" class="form-control" 
+                               value="{{ alumno.NOMBRE if alumno else '' }}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="apellido" class="form-label">Apellido *</label>
+                        <input type="text" name="apellido" id="apellido" class="form-control" 
+                               value="{{ alumno.APELLIDO if alumno else '' }}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="nivel" class="form-label">Nivel *</label>
+                        <select name="nivel" id="nivel" class="form-select" required>
+                            <option value="">Seleccionar nivel</option>
+                            <option value="Primaria" {% if alumno and alumno.NIVEL == 'Primaria' %}selected{% endif %}>Primaria</option>
+                            <option value="Secundaria" {% if alumno and alumno.NIVEL == 'Secundaria' %}selected{% endif %}>Secundaria</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="grado" class="form-label">Grado *</label>
+                        <input type="text" name="grado" id="grado" class="form-control" 
+                               value="{{ alumno.GRADO if alumno else '' }}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="seccion" class="form-label">Sección *</label>
+                        <input type="text" name="seccion" id="seccion" class="form-control" 
+                               value="{{ alumno.SECCION if alumno else '' }}" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="activo" class="form-label">Estado</label>
+                        <select name="activo" id="activo" class="form-select">
+                            <option value="1" {% if not alumno or alumno.ACTIVO == 1 %}selected{% endif %}>Activo</option>
+                            <option value="0" {% if alumno and alumno.ACTIVO == 0 %}selected{% endif %}>Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        {% if modo == 'nuevo' %}Registrar Alumno{% else %}Actualizar Datos{% endif %}
+                    </button>
+                    <a href="{{ url_for('alumnos_lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

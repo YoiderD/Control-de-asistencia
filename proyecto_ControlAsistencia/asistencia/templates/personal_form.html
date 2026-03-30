@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if modo == 'nuevo' %}Nuevo Personal{% else %}Editar Personal{% endif %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .horario-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .dia-horario {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .dia-label {
+            min-width: 100px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-3">
+    <h1 class="h5 mb-3">
+        {% if modo == 'nuevo' %}Crear Registro de Personal{% else %}Actualizar Registro de Personal{% endif %}
+    </h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for c,m in messages %}
+        <div class="alert alert-{{ c }}">{{ m }}</div>
+    {% endfor %}
+    {% endwith %}
+
+    <form method="post">
+        <div class="row g-3">
+            <!-- DNI -->
+            <div class="col-md-3">
+                <label class="form-label">DNI</label>
+                <input type="text" name="dni" class="form-control"
+                       value="{{ (persona.DNI if persona and persona.DNI is defined else persona.get('dni','') if persona else '') }}"
+                       {% if modo == 'editar' %}readonly{% endif %} maxlength="8" required>
+            </div>
+
+            <!-- Nombre -->
+            <div class="col-md-4">
+                <label class="form-label">Nombres</label>
+                <input type="text" name="nombre" class="form-control"
+                       value="{{ (persona.NOMBRE if persona and persona.NOMBRE is defined else persona.get('nombre','') if persona else '') }}" required>
+            </div>
+
+            <!-- Apellido -->
+            <div class="col-md-5">
+                <label class="form-label">Apellidos</label>
+                <input type="text" name="apellido" class="form-control"
+                       value="{{ (persona.APELLIDO if persona and persona.APELLIDO is defined else persona.get('apellido','') if persona else '') }}" required>
+            </div>
+
+            <!-- Cargo -->
+            <div class="col-md-6">
+                <label class="form-label">Cargo</label>
+                <input type="text" name="cargo" class="form-control"
+                       value="{{ (persona.CARGO if persona and persona.CARGO is defined else persona.get('cargo','') if persona else '') }}">
+            </div>
+
+            <!-- Supervisor -->
+            <div class="col-md-6">
+                <label class="form-label">Supervisor</label>
+                <select name="supervisor" class="form-select">
+                    {% set sup_val = (persona.SUPERVISOR if persona and persona.SUPERVISOR is defined else persona.get('supervisor','') if persona else '') or 'Ninguno' %}
+                    <option value="Directora" {% if sup_val=='Directora' %}selected{% endif %}>Directora</option>
+                    <option value="Subdirector Mañana" {% if sup_val=='Subdirector Mañana' %}selected{% endif %}>Subdirector Mañana</option>
+                    <option value="Subdirector Tarde" {% if sup_val=='Subdirector Tarde' %}selected{% endif %}>Subdirector Tarde</option>
+                    <option value="Ninguno" {% if sup_val=='Ninguno' %}selected{% endif %}>Ninguno</option>
+                </select>
+            </div>
+
+            <!-- Condición -->
+            <div class="col-md-4">
+                <label class="form-label">Condición</label>
+                <select name="condicion" class="form-select">
+                    {% set cond_val = (persona.CONDICION if persona and persona.CONDICION is defined else persona.get('condicion','') if persona else '') %}
+                    <option value="Contratado" {% if cond_val=='Contratado' %}selected{% endif %}>Contratado</option>
+                    <option value="Nombrado" {% if cond_val=='Nombrado' %}selected{% endif %}>Nombrado</option>
+                </select>
+            </div>
+
+            <!-- Turno -->
+            <div class="col-md-4">
+                <label class="form-label">Turno</label>
+                <select name="turno" class="form-select">
+                    {% set turno_val = (persona.TURNO if persona and persona.TURNO is defined else persona.get('turno','') if persona else '') %}
+                    <option value="Mañana" {% if turno_val=='Mañana' %}selected{% endif %}>Mañana</option>
+                    <option value="Tarde" {% if turno_val=='Tarde' %}selected{% endif %}>Tarde</option>
+                    <option value="Completo" {% if turno_val=='Completo' %}selected{% endif %}>Completo</option>
+                    <option value="Variado" {% if turno_val=='Variado' %}selected{% endif %}>Variado</option>
+                </select>
+            </div>
+
+            <!-- Horas Jornada -->
+            <div class="col-md-4">
+                <label class="form-label">Horas de Jornada</label>
+                <input type="text" name="horas_jornada" class="form-control"
+                       value="{{ (persona.HORAS_JORNADA if persona and persona.HORAS_JORNADA is defined else persona.get('horas_jornada','') if persona else '') }}">
+            </div>
+        </div>
+
+        <!-- Sección de Horarios -->
+        <div class="horario-section">
+            <h5 class="mb-3">📅 Horario de Ingreso Semanal</h5>
+            <p class="text-muted small">Ingresa la hora de entrada programada para cada día (formato 24h: HH:MM). Deja en blanco si no trabaja ese día.</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="dia-horario">
+                        <label class="dia-label">Lunes:</label>
+                        <input type="time" name="lunes" class="form-control" 
+                               value="{{ horarios.get('LUNES', '') if horarios else '' }}">
+                    </div>
+                    <div class="dia-horario">
+                        <label class="dia-label">Martes:</label>
+                        <input type="time" name="martes" class="form-control" 
+                               value="{{ horarios.get('MARTES', '') if horarios else '' }}">
+                    </div>
+                    <div class="dia-horario">
+                        <label class="dia-label">Miércoles:</label>
+                        <input type="time" name="miercoles" class="form-control" 
+                               value="{{ horarios.get('MIERCOLES', '') if horarios else '' }}">
+                    </div>
+                    <div class="dia-horario">
+                        <label class="dia-label">Jueves:</label>
+                        <input type="time" name="jueves" class="form-control" 
+                               value="{{ horarios.get('JUEVES', '') if horarios else '' }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="dia-horario">
+                        <label class="dia-label">Viernes:</label>
+                        <input type="time" name="viernes" class="form-control" 
+                               value="{{ horarios.get('VIERNES', '') if horarios else '' }}">
+                    </div>
+                    <div class="dia-horario">
+                        <label class="dia-label">Sábado:</label>
+                        <input type="time" name="sabado" class="form-control" 
+                               value="{{ horarios.get('SABADO', '') if horarios else '' }}">
+                    </div>
+                    <div class="dia-horario">
+                        <label class="dia-label">Domingo:</label>
+                        <input type="time" name="domingo" class="form-control" 
+                               value="{{ horarios.get('DOMINGO', '') if horarios else '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3 d-flex justify-content-between">
+            <a href="{{ url_for('personal_lista') }}" class="btn btn-outline-secondary">Volver</a>
+            <button class="btn btn-primary">
+                {% if modo == 'nuevo' %}Crear Datos{% else %}Actualizar Datos{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
+    <title>Reporte Mensual de Asistencias — Alumnos</title>
+    <style>
+        .sticky-filters {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 1020;
+            padding: .5rem 0;
+        }
+
+        /* Contenedor con scroll horizontal y vertical */
+        .tabla-scroll {
+            overflow-x: auto;
+            max-height: 60vh;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            background: white;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+
+        table thead th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 1030;
+        }
+
+        th,
+        td {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .celda-A {
+            background-color: #d4edda;
+        }
+
+        /* verde claro */
+        .celda-F {
+            background-color: #f8d7da;
+        }
+
+        /* rojo claro */
+        .celda-J {
+            background-color: #fff3cd;
+        }
+
+        /* amarillo claro */
+
+        /* Leyenda a la derecha de los filtros */
+        .filters-leyenda-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .leyenda {
+            white-space: nowrap;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .leyenda span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-left: 1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container-fluid py-3">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h1 class="h3 mb-0">Reporte Mensual de Asistencias — Alumnos</h1>
+            <a href="{{ url_for('menu') }}" class="btn btn-outline-secondary btn-lm">Volver al menú</a>
+        </div>
+
+        <div class="filters-leyenda-container sticky-filters">
+            <form class="row g-2 align-items-end flex-grow-1" method="get" action="{{ url_for('reportes_alumnos') }}">
+                <div class="col-auto">
+                    <label class="form-label mb-0">Mes</label>
+                    <input type="month" name="mes" class="form-control" value="{{ mes_str }}">
+                </div>
+
+                <div class="col-auto">
+                    <label class="form-label mb-0">Nivel</label>
+                    <select name="nivel" class="form-select">
+                        <option value="">Todos</option>
+                        {% for n in niveles %}
+                        {% set nval = n['NIVEL'] %}
+                        <option value="{{ nval }}" {% if nval==nivel %}selected{% endif %}>{{ nval }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <label class="form-label mb-0">Grado</label>
+                    <select name="grado" class="form-select">
+                        <option value="">Todos</option>
+                        {% for g in grados %}
+                        {% set gval = g['GRADO'] %}
+                        <option value="{{ gval }}" {% if gval==grado %}selected{% endif %}>{{ gval }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <label class="form-label mb-0">Sección</label>
+                    <select name="seccion" class="form-select">
+                        <option value="">Todas</option>
+                        {% for s in secciones %}
+                        {% set sval = s['SECCION'] %}
+                        <option value="{{ sval }}" {% if sval==seccion %}selected{% endif %}>{{ sval }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <button class="btn btn-primary">Buscar</button>
+                    <a class="btn btn-secondary ms-2" href="{{ url_for('reportes_alumnos') }}">Limpiar</a>
+                </div>
+            </form>
+
+            <div class="leyenda fs-5">
+                <strong>Leyenda:</strong>
+                <span class="badge bg-success p-2 ms-2">A = Presente</span>
+                <span class="badge bg-danger p-2 ms-2">F = Falta</span>
+                <span class="badge bg-warning text-dark p-2 ms-2">J = Justificado</span>
+            </div>
+        </div>
+
+        <!-- Resumen filtros seleccionados -->
+        <div class="mb-2">
+            <strong>Filtros seleccionados:</strong>
+            <ul class="list-inline mb-0">
+                <li class="list-inline-item"><strong>Nivel:</strong> {{ nivel if nivel else 'Todos' }}</li>
+                <li class="list-inline-item"><strong>Grado:</strong> {{ grado if grado else 'Todos' }}</li>
+                <li class="list-inline-item"><strong>Sección:</strong> {{ seccion if seccion else 'Todas' }}</li>
+            </ul>
+        </div>
+
+        <div class="tabla-scroll">
+            <table class="table table-sm table-bordered align-middle mb-0" style="min-width: 900px;">
+                <thead class="table-light">
+                    <tr>
+                        <th style="min-width: 48px">#</th>
+                        <th style="min-width: 220px">Alumno</th>
+                        <th style="min-width: 120px">DNI</th>
+                        {% for d in dias %}
+                        <th style="min-width: 80px; text-align:center;">
+                            {% set dow = d.weekday() %}
+                            {% if dow == 0 %}Lun
+                            {% elif dow == 1 %}Mar
+                            {% elif dow == 2 %}Mié
+                            {% elif dow == 3 %}Jue
+                            {% elif dow == 4 %}Vie
+                            {% endif %}
+                            <br>
+                            {{ d.strftime("%d/%m") }}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if not has_search %}
+                    <tr>
+                        <td colspan="{{ 3 + (dias|length if dias is defined else 0) }}"
+                            class="text-center text-muted py-4">
+                            Realice una búsqueda para ver el reporte de asistencias
+                        </td>
+                    </tr>
+                    {% elif alumnos %}
+                    {% for a in alumnos %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td class="text-start">{{ a.NOMBRE }} {{ a.APELLIDO }}</td>
+                        <td>{{ a.DNI_ALUMNO }}</td>
+
+                        {% for d in dias %}
+                        {% set fecha_str = d.strftime("%Y-%m-%d") %}
+                        {% set estado = asist_dict.get(a.DNI_ALUMNO, {}).get(fecha_str) %}
+                        {% if estado == 'A' %}
+                        <td class="celda-A">A</td>
+                        {% elif estado == 'F' %}
+                        <td class="celda-F">F</td>
+                        {% elif estado == 'J' %}
+                        <td class="celda-J">J</td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="{{ 3 + (dias|length if dias is defined else 0) }}"
+                            class="text-center text-muted py-3">
+                            No hay alumnos para los filtros seleccionados.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Botón Exportar Excel separado debajo de todo -->
+        <div class="mt-3">
+            {% if has_search %}
+            <a href="{{ url_for('exportar_excel_alumnos', mes=mes_str, nivel=nivel, grado=grado, seccion=seccion) }}"
+                class="btn btn-success">Exportar Excel</a>
+            {% else %}
+            <button class="btn btn-success" disabled title="Realice una búsqueda primero">Exportar Excel</button>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

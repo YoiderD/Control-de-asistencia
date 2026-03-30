@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ingreso del Personal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+  :root {
+    --primary-blue: #0d6efd;
+    --dark-blue: #0a58ca;
+    --light-bg: #f0f2f5;
+  }
+
+  body {
+    background-color: var(--light-bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .landscape-container {
+    width: 90%;
+    max-width: 800px;
+    margin: auto;
+  }
+
+  .main-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+  }
+
+  .header-section {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .header-section h1 { font-size: 1.5rem; margin: 0; font-weight: 600; }
+  .header-section p { font-size: 0.9rem; margin: 5px 0 0; opacity: 0.9; }
+
+  .form-section { padding: 25px; }
+
+  .form-label { font-weight: 600; color: #444; margin-bottom: 8px; }
+
+  .form-control {
+    font-size: 1.5rem;
+    padding: 12px;
+    border: 2px solid #ced4da;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .btn-register {
+    background-color: var(--primary-blue);
+    color: white;
+    font-size: 1.2rem;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .confirm-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-left: 5px solid var(--primary-blue);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    text-align: left;
+  }
+
+  .confirm-box p { margin: 4px 0; font-size: 0.95rem; }
+  .confirm-box .highlight { color: var(--primary-blue); font-weight: bold; }
+  .confirm-box .label-muted { color: #6c757d; font-size: 0.82rem; margin-bottom: 0; }
+
+  .modal-backdrop-custom {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+  }
+
+  .modal-custom {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050;
+    width: 90%;
+    max-width: 450px;
+  }
+
+  .modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+
+  .modal-header {
+    background-color: #ffc107;
+    color: #000;
+    padding: 15px;
+    border-radius: 12px 12px 0 0;
+    text-align: center;
+    display: block;
+  }
+
+  .modal-body { padding: 25px; text-align: center; }
+  .modal-body .person-name { font-size: 1.2rem; font-weight: bold; color: #333; }
+  .modal-body .entry-time { font-size: 2.5rem; font-weight: 800; color: var(--primary-blue); margin: 10px 0; }
+  .modal-body .question { color: #dc3545; font-weight: 600; margin-top: 15px; }
+
+  .modal-footer {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn-modal { padding: 10px 20px; border-radius: 6px; font-weight: 600; border: none; }
+  .btn-exit { background-color: #dc3545; color: white; }
+  .btn-cancel { background-color: #6c757d; color: white; }
+
+  .rotate-warning { display: none; }
+
+  @media (orientation: portrait) {
+    .rotate-warning {
+      display: block;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      z-index: 9999;
+      text-align: center;
+      font-size: 1.1rem;
+      padding: 20px;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .landscape-container { display: none; }
+  }
+
+  @media (orientation: landscape) {
+    .rotate-warning { display: none !important; }
+    .landscape-container { display: block; }
+  }
+  </style>
+</head>
+<body>
+
+  <div class="alert alert-warning text-center rotate-warning shadow-sm" role="alert">
+    <i class="bi bi-phone-flip"></i> Por favor, usa la tablet en modo horizontal.
+  </div>
+
+  <div class="landscape-container">
+    <div class="main-card">
+      <div class="header-section">
+        <h1><i class="bi bi-person-check"></i> Registro de Asistencia</h1>
+        <p>Sistema de Control de Personal</p>
+      </div>
+
+      <div class="form-section">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'info' if category=='message' else category }} py-2 small mb-3">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" autocomplete="off">
+          <div class="mb-3">
+            <label for="dni" class="form-label">Número de DNI</label>
+            <input type="text" id="dni" name="dni" class="form-control" placeholder="########"
+                   inputmode="numeric" pattern="\d{8}" maxlength="8" required autofocus>
+          </div>
+          <button class="btn-register" type="submit">Registrar Ahora</button>
+        </form>
+
+        <!-- ✅ Confirmación de ENTRADA -->
+        {% if msg and detalle and not detalle.get('hora_salida') %}
+          <div class="confirm-box">
+            <p><strong><i class="bi bi-check-circle-fill text-success"></i> {{ msg }}</strong></p>
+            <p>Personal: <strong>{{ detalle.nombre }}</strong></p>
+            <hr class="my-2">
+            <p class="label-muted"><i class="bi bi-clock"></i> Horario programado</p>
+            <p><span class="highlight">{{ detalle.get('horario_programado', 'No definido') }}</span></p>
+            <p class="label-muted"><i class="bi bi-box-arrow-in-right"></i> Hora de llegada</p>
+            <p><span class="highlight">{{ detalle.hora_llegada }}</span></p>
+          </div>
+        {% endif %}
+
+        <!-- 🔵 Confirmación de SALIDA -->
+        {% if msg and detalle and detalle.get('hora_salida') %}
+          <div class="confirm-box" style="border-left-color: #17a2b8;">
+            <p><strong><i class="bi bi-info-circle-fill text-info"></i> {{ msg }}</strong></p>
+            <p>Personal: <strong>{{ detalle.nombre }}</strong></p>
+            <hr class="my-2">
+            <p class="label-muted"><i class="bi bi-box-arrow-in-right"></i> Hora de llegada</p>
+            <p><span class="highlight">{{ detalle.hora_llegada }}</span></p>
+            <p class="label-muted"><i class="bi bi-box-arrow-right"></i> Hora de salida</p>
+            <p><span class="highlight">{{ detalle.hora_salida }}</span></p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Salida -->
+  {% if mostrar_confirmacion %}
+  <div class="modal-backdrop-custom"></div>
+  <div class="modal-custom">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="m-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Salida</h5>
+      </div>
+      <div class="modal-body">
+        <p class="person-name">{{ detalle.nombre }}</p>
+        <p class="text-muted small">Entrada registrada a las:</p>
+        <p class="entry-time">{{ detalle.hora_entrada }}</p>
+        <p class="question">¿Deseas marcar tu salida ahora?</p>
+      </div>
+      <div class="modal-footer">
+        <form method="POST">
+          <input type="hidden" name="dni" value="{{ dni_confirmacion }}">
+          <input type="hidden" name="confirmar_salida" value="si">
+          <button type="submit" class="btn-modal btn-exit">
+            <i class="bi bi-box-arrow-right"></i> Sí, marcar salida
+          </button>
+        </form>
+        <button type="button" class="btn-modal btn-cancel"
+                onclick="window.location.href='{{ url_for('ingreso_personal') }}'">
+          <i class="bi bi-x-lg"></i> Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const dni = document.getElementById('dni');
+      if (dni) dni.focus();
+
+      // Solo permite ingresar números en el campo DNI
+      dni.addEventListener('keypress', function(e) {
+        if (e.which < 48 || e.which > 57) e.preventDefault();
+      });
+
+      // Limpia letras si se pega texto
+      dni.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+      });
+    });
+  </script>
+</body>
+</html>

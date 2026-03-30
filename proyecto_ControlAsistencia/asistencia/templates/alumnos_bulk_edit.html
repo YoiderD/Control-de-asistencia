@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <title>Edición Múltiple de Alumnos</title>
+</head>
+<body class="bg-light">
+<div class="container py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h5 mb-0">Edición Múltiple de Alumnos</h1>
+        <a href="{{ url_for('alumnos_lista') }}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for c,m in messages %}
+        <div class="alert alert-{{ c }}">{{ m }}</div>
+    {% endfor %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Actualizar {{ selected_count }} alumnos seleccionados</h5>
+        </div>
+        <div class="card-body">
+            <!-- Enviamos por POST: incluimos los selected_dnis como hidden inputs para que persistan -->
+            <form method="POST">
+                {% for d in selected_dnis %}
+                    <input type="hidden" name="selected_alumnos" value="{{ d }}">
+                {% endfor %}
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="nivel" class="form-label">Nivel</label>
+                        <select name="nivel" id="nivel" class="form-select">
+                            <option value="">-- No cambiar --</option>
+                            <option value="Primaria">Primaria</option>
+                            <option value="Secundaria">Secundaria</option>
+                        </select>
+                        <div class="form-text">Dejar sin seleccionar para no cambiar</div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="grado" class="form-label">Grado</label>
+                        <input type="text" name="grado" id="grado" class="form-control" 
+                               placeholder="Nuevo grado (dejar vacío para no cambiar)">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="seccion" class="form-label">Sección</label>
+                        <input type="text" name="seccion" id="seccion" class="form-control" 
+                               placeholder="Nueva sección (dejar vacío para no cambiar)">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="activo" class="form-label">Estado</label>
+                        <select name="activo" id="activo" class="form-select">
+                            <option value="">-- No cambiar --</option>
+                            <option value="1">Activo</option>
+                            <option value="0">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Aplicar Cambios</button>
+                    <a href="{{ url_for('alumnos_lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <div class="alert alert-info">
+            <strong>Instrucciones:</strong> 
+            <ul class="mb-0">
+                <li>Seleccione los campos que desea actualizar</li>
+                <li>Los campos dejados en blanco o sin seleccionar no se modificarán</li>
+                <li>Los cambios se aplicarán a los {{ selected_count }} alumnos seleccionados</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

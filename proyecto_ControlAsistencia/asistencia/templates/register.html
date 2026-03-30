@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crear cuenta</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body class="bg-light">
+    <div class="container" style="max-width: 420px; margin-top: 7vh">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title mb-3 text-center">Crear cuenta</h4>
+                {% with messages = get_flashed_messages(with_categories=true) %} {% if
+                messages %} {% for cat, msg in messages %}
+                <div
+                    class="alert alert-{{ 'warning' if cat=='warning' else ('danger' if cat=='danger' else ('info' if cat=='info' else 'success')) }} py-2">
+                    {{ msg }}
+                </div>
+                {% endfor %} {% endif %} {% endwith %}
+                <form method="post" autocomplete="off">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input id="nombre" name="nombre" class="form-control" required value="{{ nombre or '' }}" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="rol" class="form-label">Rol</label>
+                        <select id="rol" name="rol" class="form-select" required>
+                            <option value="">Selecciona un rol</option>
+                            <option value="Director(a)">Director(a)</option>
+                            <option value="Subdirector(a)">Subdirector(a)</option>
+                            <option value="Secretario(a)">Secretario(a)</option>
+                            <option value="Administrativo">Administrativo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="correo" class="form-label">Correo</label>
+                        <input id="correo" name="correo" class="form-control" type="email" required
+                            value="{{ correo or '' }}" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input id="password" name="password" class="form-control" type="password" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="password2" class="form-label">Repetir contraseña</label>
+                        <input id="password2" name="password2" class="form-control" type="password" required />
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button class="btn btn-success">Crear cuenta</button>
+                        <a class="btn btn-link" href="{{ url_for('login') }}">Volver al login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <p class="text-muted text-center small mt-3">
+            Solo personal autorizado debe crear cuentas.
+        </p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

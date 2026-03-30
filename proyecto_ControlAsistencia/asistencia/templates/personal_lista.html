@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestión de Personal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Gestión de Personal</h1>
+        <a href="{{ url_for('menu') }}" class="btn btn-outline-secondary btn-lm">Volver al menú</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for c, m in messages %}
+            <div class="alert alert-{{ c }} alert-dismissible fade show" role="alert">
+                {{ m }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="mb-2 text-end">
+        <a href="{{ url_for('personal_nuevo') }}" class="btn btn-success">+ Agregar Personal</a>
+    </div>
+
+    <!-- FORMULARIO DE FILTROS: Turno + búsqueda + Buscar -->
+    <form method="GET" action="{{ url_for('personal_lista') }}" class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+            <label for="turno" class="form-label">Turno</label>
+            <select name="turno" id="turno" class="form-select">
+                <option value="">Todos</option>
+                <option value="Mañana" {% if turno_actual == 'Mañana' %}selected{% endif %}>Mañana</option>
+                <option value="Tarde" {% if turno_actual == 'Tarde' %}selected{% endif %}>Tarde</option>
+                <option value="Completo" {% if turno_actual == 'Completo' %}selected{% endif %}>Completo</option>
+                <option value="Variado" {% if turno_actual == 'Variado' %}selected{% endif %}>Variado</option>
+            </select>
+        </div>
+
+        <div class="col-auto">
+            <label for="q" class="form-label">Buscar</label>
+            <input type="text" name="q" id="q" class="form-control"
+                   placeholder="Ingresa nombres, apellido o DNI" value="{{ q_actual }}">
+        </div>
+
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            <a href="{{ url_for('personal_lista') }}" class="btn btn-outline-secondary">Limpiar</a>
+        </div>
+
+        <div class="col-auto ms-auto text-end align-self-start">
+            <small class="text-muted">Total: {{ total_rows }}</small>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle bg-white">
+            <thead class="table-light">
+            <tr>
+                <th style="width:48px">#</th>
+                <th>DNI</th>
+                <th>Nombre y Apellido</th>
+                <th>Cargo</th>
+                <th>Supervisor</th>
+                <th>Condición</th>
+                <th>Turno</th>
+                <th>Horas Jornada</th>
+                <th style="width:160px;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% if rows %}
+                {% for p in rows %}
+                    <tr>
+                        <td>{{ loop.index + (page - 1) * per_page }}</td>
+                        <td>{{ p.DNI }}</td>
+                        <td>{{ p.NOMBRE }} {{ p.APELLIDO }}</td>
+                        <td>{{ p.CARGO }}</td>
+                        <td>{{ p.SUPERVISOR }}</td>
+                        <td>{{ p.CONDICION }}</td>
+                        <td>{{ p.TURNO }}</td>
+                        <td>{{ p.HORAS_JORNADA }}</td>
+                        <td>
+                            <a href="{{ url_for('personal_editar', dni=p.DNI) }}" class="btn btn-sm btn-primary me-1">Editar</a>
+
+                            <!-- Botón que abre modal -->
+                            <button type="button"
+                                    class="btn btn-sm btn-danger btn-delete"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-delete-url="{{ url_for('personal_eliminar', dni=p.DNI) }}"
+                                    data-delete-name="{{ p.NOMBRE }} {{ p.APELLIDO }}">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted">
+                        No hay registros de personal.
+                    </td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINACIÓN (mantiene filtros turno y q) -->
+    {% if total_pages and total_pages > 1 %}
+    <nav aria-label="Paginación de personal">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="{{ url_for('personal_lista', page=page-1, turno=turno_actual, q=q_actual) }}">Anterior</a>
+            </li>
+            {% endif %}
+
+            {% for pagenum in range(1, total_pages + 1) %}
+                {% if pagenum == page %}
+                <li class="page-item active"><span class="page-link">{{ pagenum }}</span></li>
+                {% elif pagenum >= page - 2 and pagenum <= page + 2 %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for('personal_lista', page=pagenum, turno=turno_actual, q=q_actual) }}">{{ pagenum }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="{{ url_for('personal_lista', page=page+1, turno=turno_actual, q=q_actual) }}">Siguiente</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que deseas eliminar el registro de <strong id="deleteTargetName"></strong>?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      const deleteUrl = button.getAttribute('data-delete-url');
+      const deleteName = button.getAttribute('data-delete-name');
+
+      const modalName = confirmDeleteModal.querySelector('#deleteTargetName');
+      modalName.textContent = deleteName;
+
+      const confirmBtn = confirmDeleteModal.querySelector('#confirmDeleteBtn');
+      confirmBtn.onclick = function() {
+        // Crear formulario temporal para enviar POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+        document.body.appendChild(form);
+        form.submit();
+      };
+    });
+  });
+</script>
+
+</body>
+</html>

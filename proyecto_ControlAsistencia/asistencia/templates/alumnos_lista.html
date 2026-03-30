@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <title>Gestión de Alumnos</title>
+</head>
+<body class="bg-light">
+<div class="container py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Gestión de Alumnos</h1>
+        <a href="{{ url_for('menu') }}" class="btn btn-outline-secondary btn-lm">Volver al menú</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for c,m in messages %}
+        <div class="alert alert-{{ c }}">{{ m }}</div>
+    {% endfor %}
+    {% endwith %}
+
+    <!-- Formulario de filtros -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label for="nivel" class="form-label">Nivel</label>
+                    <select name="nivel" id="nivel" class="form-select">
+                        <option value="">Todos</option>
+                        {% for n in niveles %}
+                        <option value="{{ n.NIVEL }}" {% if nivel_actual == n.NIVEL %}selected{% endif %}>
+                            {{ n.NIVEL }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="grado" class="form-label">Grado</label>
+                    <select name="grado" id="grado" class="form-select">
+                        <option value="">Todos</option>
+                        {% for g in grados %}
+                        <option value="{{ g.GRADO }}" {% if grado_actual == g.GRADO %}selected{% endif %}>
+                            {{ g.GRADO }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="seccion" class="form-label">Sección</label>
+                    <select name="seccion" id="seccion" class="form-select">
+                        <option value="">Todas</option>
+                        {% for s in secciones %}
+                        <option value="{{ s.SECCION }}" {% if seccion_actual == s.SECCION %}selected{% endif %}>
+                            {{ s.SECCION }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="dni" class="form-label">Buscar por DNI</label>
+                    <input type="text" name="dni" id="dni" class="form-control" 
+                           value="{{ dni_actual }}" placeholder="Ingrese DNI...">
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="activo" class="form-label">Estado</label>
+                    <select name="activo" id="activo" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="1" {% if activo_actual == '1' %}selected{% endif %}>Activos</option>
+                        <option value="0" {% if activo_actual == '0' %}selected{% endif %}>Inactivos</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                    <a href="{{ url_for('alumnos_lista') }}" class="btn btn-outline-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <a href="{{ url_for('alumnos_nuevo') }}" class="btn btn-success">+ Nuevo Alumno</a>
+            <button type="button" class="btn btn-primary" id="bulkEditBtn" disabled>
+                Editar Seleccionados (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+        <div>
+            <small class="text-muted">
+                Mostrando {{ alumnos|length }} de {{ total_rows }} alumnos
+            </small>
+        </div>
+    </div>
+
+    <!-- Tabla de alumnos -->
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle bg-white">
+            <thead class="table-light">
+            <tr>
+                <th style="width: 40px;">
+                    <input type="checkbox" id="selectAll" class="form-check-input">
+                </th>
+                <th>#</th>
+                <th>DNI</th>
+                <th>Apellido y Nombre</th>
+                <th>Nivel</th>
+                <th>Grado</th>
+                <th>Sección</th>
+                <th>Estado</th>
+                <th style="width: 120px;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% if alumnos %}
+                {% for a in alumnos %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="selected_alumnos" 
+                                   value="{{ a.DNI }}" class="form-check-input alumno-checkbox">
+                        </td>
+                        <td>{{ loop.index + (page - 1) * 50 }}</td>
+                        <td>{{ a.DNI }}</td>
+                        <td>{{ a.APELLIDO }}, {{ a.NOMBRE }}</td>
+                        <td>{{ a.NIVEL }}</td>
+                        <td>{{ a.GRADO }}</td>
+                        <td>{{ a.SECCION }}</td>
+                        <td>
+                            {% if a.ACTIVO == 1 %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('alumnos_editar', dni=a.DNI) }}" 
+                               class="btn btn-sm btn-primary">Editar</a>
+                            <button type="button"
+                                    class="btn btn-sm btn-danger btn-delete-alumno"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-delete-url="{{ url_for('alumnos_eliminar', dni=a.DNI) }}"
+                                    data-delete-name="{{ a.APELLIDO }}, {{ a.NOMBRE }}">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted">
+                        {% if not has_search %}
+                            Realice una búsqueda para ver alumnos
+                        {% else %}
+                            No hay alumnos registrados.
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if total_pages > 1 %}
+    <nav aria-label="Paginación de alumnos">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('alumnos_lista', page=page-1, nivel=nivel_actual, grado=grado_actual, seccion=seccion_actual, dni=dni_actual, activo=activo_actual) }}">Anterior</a>
+            </li>
+            {% endif %}
+            
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ p }}</span>
+                </li>
+                {% elif p >= page - 2 and p <= page + 2 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('alumnos_lista', page=p, nivel=nivel_actual, grado=grado_actual, seccion=seccion_actual, dni=dni_actual, activo=activo_actual) }}">{{ p }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page < total_pages %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('alumnos_lista', page=page+1, nivel=nivel_actual, grado=grado_actual, seccion=seccion_actual, dni=dni_actual, activo=activo_actual) }}">Siguiente</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+<!-- Modal de confirmación para eliminar alumno -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que deseas eliminar al alumno <strong id="deleteTargetName"></strong>?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulario oculto que envia los DNI seleccionados por POST -->
+<form id="bulkEditForm" method="POST" action="{{ url_for('alumnos_bulk_edit') }}"></form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const bulkEditBtn = document.getElementById('bulkEditBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const bulkEditForm = document.getElementById('bulkEditForm');
+
+    function getCheckboxes() {
+        return Array.from(document.querySelectorAll('.alumno-checkbox'));
+    }
+
+    function updateSelectedCount() {
+        const selected = getCheckboxes().filter(cb => cb.checked).length;
+        selectedCount.textContent = selected;
+        bulkEditBtn.disabled = selected === 0;
+        const all = getCheckboxes();
+        if (all.length === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+        } else {
+            const checkedCount = all.filter(cb => cb.checked).length;
+            selectAll.checked = checkedCount === all.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < all.length;
+        }
+    }
+
+    // Selección/deselección de todos
+    selectAll.addEventListener('change', function() {
+        getCheckboxes().forEach(checkbox => checkbox.checked = this.checked);
+        updateSelectedCount();
+    });
+
+    // Adjuntar listeners a checkboxes actuales
+    function attachCheckboxListeners() {
+        getCheckboxes().forEach(checkbox => {
+            if (!checkbox.dataset.listenerAttached) {
+                checkbox.addEventListener('change', updateSelectedCount);
+                checkbox.dataset.listenerAttached = "1";
+            }
+        });
+    }
+
+    attachCheckboxListeners();
+    updateSelectedCount();
+
+    // Enviar formulario de edición múltiple (POST)
+    bulkEditBtn.addEventListener('click', function() {
+        const selected = getCheckboxes().filter(cb => cb.checked);
+        if (selected.length === 0) return;
+
+        bulkEditForm.innerHTML = '';
+
+        selected.forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selected_alumnos';
+            input.value = checkbox.value;
+            bulkEditForm.appendChild(input);
+        });
+
+        bulkEditForm.submit();
+    });
+});
+
+// Manejo del modal de eliminación
+document.addEventListener('DOMContentLoaded', function () {
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      const deleteUrl = button.getAttribute('data-delete-url');
+      const deleteName = button.getAttribute('data-delete-name');
+
+      const modalName = confirmDeleteModal.querySelector('#deleteTargetName');
+      modalName.textContent = deleteName;
+
+      const confirmBtn = confirmDeleteModal.querySelector('#confirmDeleteBtn');
+      confirmBtn.onclick = function() {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+        document.body.appendChild(form);
+        form.submit();
+      };
+    });
+});
+</script>
+</body>
+</html>
